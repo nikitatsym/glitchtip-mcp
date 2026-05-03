@@ -1,0 +1,41 @@
+x-environment: &default-environment
+  DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+  VALKEY_URL: redis://valkey:6379
+  SECRET_KEY: test-secret-not-for-production
+  EMAIL_URL: consolemail://
+  GLITCHTIP_DOMAIN: http://localhost:8000
+  DEFAULT_FROM_EMAIL: test@example.com
+  ENABLE_ADMIN: "True"
+  ENABLE_OPENAPI: "True"
+  GLITCHTIP_ENABLE_MCP: "False"
+  GLITCHTIP_ENABLE_DUCKDB: "False"
+  ENABLE_USER_REGISTRATION: "True"
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    restart: unless-stopped
+    volumes:
+      - pg-data:/var/lib/postgresql
+  valkey:
+    image: valkey/valkey:9
+    restart: unless-stopped
+  web:
+    image: glitchtip/glitchtip:6
+    depends_on:
+      - postgres
+      - valkey
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *default-environment
+      SERVER_ROLE: all_in_one
+    restart: unless-stopped
+    volumes:
+      - uploads:/code/uploads
+
+volumes:
+  pg-data:
+  uploads:

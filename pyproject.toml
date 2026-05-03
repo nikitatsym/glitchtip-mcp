@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "glitchtip-mcp"
+version = "1.0.0"
+description = "MCP server for GlitchTip — full API coverage for autonomous agents"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.27.0",
+    "pydantic-settings>=2.0",
+]
+keywords = ["mcp", "glitchtip", "sentry", "error-tracking", "model-context-protocol", "claude", "ai"]
+
+[project.scripts]
+glitchtip-mcp = "glitchtip_mcp:main"
+
+[project.urls]
+Homepage = "https://github.com/nikitatsym/glitchtip-mcp"
+Repository = "https://github.com/nikitatsym/glitchtip-mcp"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "smoke: tests that hit a live GlitchTip instance (require GLITCHTIP_URL + GLITCHTIP_TOKEN)",
+]
+testpaths = ["tests"]
