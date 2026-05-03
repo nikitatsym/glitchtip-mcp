@@ -45,6 +45,9 @@ jobs:
           sed -i "s/^version = .*/version = \"${{ steps.version.outputs.version }}\"/" pyproject.toml
           uv build --wheel --out-dir dist/
 
+      - name: Configure pages
+        uses: actions/configure-pages@v5
+
       - name: Create tag & release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -80,9 +83,6 @@ jobs:
 
       - name: Copy docs
         run: cp docs/index.html _site/
-
-      - name: Configure pages
-        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
