@@ -20,13 +20,29 @@ def test_module_imports():
     import glitchtip_mcp.server as server  # noqa: F401
 
 
+def test_api_root_is_not_registered():
+    os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
+    os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
+    from glitchtip_mcp import server
+
+    assert "api_root" not in server.mcp._tool_manager._tools
+
+
+def test_who_am_i_is_registered_in_read():
+    os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
+    os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
+    from glitchtip_mcp import server
+
+    assert "WhoAmI" in server._group_ops["glitchtip_read"]
+
+
 def test_group_registration_full_count():
     os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
     os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
     from glitchtip_mcp import server
 
     expected = {
-        "glitchtip_read": 59,
+        "glitchtip_read": 60,
         "glitchtip_write": 34,
         "glitchtip_delete": 17,
         "glitchtip_admin_read": 17,
@@ -65,9 +81,18 @@ class _VersionClient:
         self._response = response
 
     def get(self, path: str):
-        assert path == "/api/0/"
+        assert path == "/api/settings/"
         if isinstance(self._response, Exception):
             raise self._response
+        return self._response
+
+
+class _WhoAmIClient:
+    def __init__(self, response):
+        self._response = response
+
+    def get(self, path: str):
+        assert path == "/api/0/"
         return self._response
 
 
@@ -100,6 +125,67 @@ def test_version_does_not_expose_error_details(monkeypatch):
 
     assert result["service"] == {"status": "error"}
     assert "must-not-leak" not in repr(result)
+
+
+def test_who_am_i_returns_only_allowlisted_fields(monkeypatch):
+    from glitchtip_mcp import tools
+
+    response = {
+        "version": "0",
+        "user": {
+            "id": "1",
+            "username": "user@example.com",
+            "email": "user@example.com",
+            "name": "User",
+            "isSuperuser": False,
+            "isActive": True,
+            "options": {"theme": "dark"},
+            "identities": [{"provider": "github"}],
+        },
+        "auth": {
+            "id": 1,
+            "label": "MCP",
+            "scopes": ["event:read"],
+            "created": "2026-07-24T00:00:00Z",
+            "token": "must-not-leak",
+        },
+    }
+    monkeypatch.setattr(tools, "_get_client", lambda: _WhoAmIClient(response))
+
+    result = tools.who_am_i()
+
+    assert result == {
+        "authenticated": True,
+        "user": {
+            "id": "1",
+            "username": "user@example.com",
+            "email": "user@example.com",
+            "name": "User",
+            "isSuperuser": False,
+            "isActive": True,
+        },
+        "auth": {
+            "id": 1,
+            "label": "MCP",
+            "scopes": ["event:read"],
+            "created": "2026-07-24T00:00:00Z",
+        },
+    }
+    assert "must-not-leak" not in repr(result)
+    assert "theme" not in repr(result)
+    assert "github" not in repr(result)
+
+
+def test_who_am_i_returns_safe_anonymous_result(monkeypatch):
+    from glitchtip_mcp import tools
+
+    monkeypatch.setattr(
+        tools,
+        "_get_client",
+        lambda: _WhoAmIClient({"version": "0", "user": None, "auth": None}),
+    )
+
+    assert tools.who_am_i() == {"authenticated": False}
 
 
 def test_codegen_is_idempotent(tmp_path):

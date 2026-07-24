@@ -286,13 +286,43 @@ def _register_groups():
 _register_groups()
 
 
+# ── Custom operations ───────────────────────────────────────────────────────
+
+def _present_fields(value: dict, names: tuple[str, ...]) -> dict:
+    return {name: value[name] for name in names if value.get(name) is not None}
+
+
+def who_am_i():
+    """Get the authenticated account and token metadata."""
+    response = _get_client().get("/api/0/")
+    user = response["user"]
+    auth = response["auth"]
+    if user is not None and not isinstance(user, dict):
+        raise TypeError("GlitchTip API returned an invalid user")
+    if auth is not None and not isinstance(auth, dict):
+        raise TypeError("GlitchTip API returned invalid auth metadata")
+
+    result = {"authenticated": user is not None}
+    if user is not None:
+        result["user"] = _present_fields(
+            user,
+            ("id", "username", "email", "name", "isSuperuser", "isActive"),
+        )
+    if auth is not None:
+        result["auth"] = _present_fields(auth, ("id", "label", "scopes", "created"))
+    return result
+
+
+_op(glitchtip_read)(who_am_i)
+
+
 # ── Custom ROOT operation: version ──────────────────────────────────────────
 
 
 def glitchtip_version():
     """Get the MCP server version and GlitchTip service status."""
     try:
-        response = _get_client().get("/api/0/")
+        response = _get_client().get("/api/settings/")
         service = {
             "status": "ok",
             "version": response["version"],
@@ -308,11 +338,13 @@ def glitchtip_version():
 _op(ROOT)(glitchtip_version)
 _grouped.add("glitchtip_version")
 
+_GENERATED_ROOT_EXCLUSIONS = frozenset({"api_root"})
+
 
 # ── Auto-ROOT for any ungrouped generated function ──────────────────────────
 
 for _name, _fn in inspect.getmembers(_generated, inspect.isfunction):
     if _name.startswith("_"):
         continue
-    if _name not in _grouped:
+    if _name not in _grouped and _name not in _GENERATED_ROOT_EXCLUSIONS:
         _op(ROOT)(_fn)
