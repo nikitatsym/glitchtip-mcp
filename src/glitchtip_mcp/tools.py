@@ -4,6 +4,7 @@ All generated functions are imported and assigned to MCP groups.
 Functions not explicitly grouped become standalone ROOT tools.
 """
 
+from importlib.metadata import version
 import inspect
 import re
 
@@ -290,16 +291,17 @@ _register_groups()
 
 def glitchtip_version():
     """Get the MCP server version and GlitchTip service status."""
-    from importlib.metadata import version
     try:
-        service = _get_client().get("/api/0/")
-        status = "ok" if isinstance(service, dict) else "error"
-    except Exception as exc:  # noqa: BLE001
-        service = str(exc)
-        status = "error"
+        response = _get_client().get("/api/0/")
+        service = {
+            "status": "ok",
+            "version": response["version"],
+        }
+    except Exception:  # noqa: BLE001
+        service = {"status": "error"}
     return {
         "mcp": version("glitchtip-mcp"),
-        "service": {"status": status, "info": service},
+        "service": service,
     }
 
 

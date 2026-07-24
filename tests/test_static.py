@@ -60,6 +60,48 @@ def test_help_renders_for_every_group():
         assert text.count("\n") >= len(server._group_ops[group_name])
 
 
+class _VersionClient:
+    def __init__(self, response):
+        self._response = response
+
+    def get(self, path: str):
+        assert path == "/api/0/"
+        if isinstance(self._response, Exception):
+            raise self._response
+        return self._response
+
+
+def test_version_returns_only_safe_service_fields(monkeypatch):
+    from glitchtip_mcp import tools
+
+    response = {
+        "version": "6.1.6",
+        "user": {"email": "user@example.com"},
+        "auth": {"token": "must-not-leak"},
+    }
+    monkeypatch.setattr(tools, "_get_client", lambda: _VersionClient(response))
+
+    result = tools.glitchtip_version()
+
+    assert result["service"] == {"status": "ok", "version": "6.1.6"}
+    assert "must-not-leak" not in repr(result)
+
+
+def test_version_does_not_expose_error_details(monkeypatch):
+    from glitchtip_mcp import tools
+
+    monkeypatch.setattr(
+        tools,
+        "_get_client",
+        lambda: _VersionClient(RuntimeError("must-not-leak")),
+    )
+
+    result = tools.glitchtip_version()
+
+    assert result["service"] == {"status": "error"}
+    assert "must-not-leak" not in repr(result)
+
+
 def test_codegen_is_idempotent(tmp_path):
     """Running the codegen twice on the same spec yields identical output."""
     import subprocess
