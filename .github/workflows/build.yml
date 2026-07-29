@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["src/**", "pyproject.toml", ".github/workflows/build.yml", "docs/**"]
+    paths: ["src/**", "tests/**", "dev.py", "pyproject.toml", ".github/workflows/build.yml", "docs/**"]
 
 permissions:
   contents: write
@@ -35,10 +35,10 @@ jobs:
             echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run static tests
+      - name: Check
         run: |
           uv sync --group dev
-          uv run pytest -q tests/test_static.py
+          uv run python dev.py check
 
       - name: Build wheel
         run: |

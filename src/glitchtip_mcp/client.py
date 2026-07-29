@@ -47,14 +47,16 @@ class GlitchTipClient:
         if r.status_code >= 400:
             try:
                 body = r.json()
-            except Exception:
+            # r.json() decodes bytes, so a non-UTF-8 or truncated body raises
+            # UnicodeDecodeError, not just JSONDecodeError.
+            except Exception:  # noqa: BLE001 - any error body degrades to r.text
                 body = r.text
             raise GlitchTipError(r.status_code, method, path, body)
         if r.status_code == 204 or not r.content:
             return None
         try:
             return r.json()
-        except Exception:
+        except Exception:  # noqa: BLE001 - same gotcha: non-JSON/undecodable 2xx body returned as text
             return r.text
 
     def get(self, path: str, params: dict | None = None):

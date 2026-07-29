@@ -17,7 +17,7 @@ def test_module_imports():
     # Avoid crashing on empty config when client is lazy-init'd
     os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
     os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
-    import glitchtip_mcp.server as server  # noqa: F401
+    from glitchtip_mcp import server  # noqa: F401
 
 
 def test_api_root_is_not_registered():

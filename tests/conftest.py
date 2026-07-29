@@ -32,8 +32,8 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="session")
 def configured_env():
     """Reset cached settings so live env vars take effect."""
-    from glitchtip_mcp.config import _reset_settings
     import glitchtip_mcp._helpers as helpers
+    from glitchtip_mcp.config import _reset_settings
 
     _reset_settings()
     helpers._client = None

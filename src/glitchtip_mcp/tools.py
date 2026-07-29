@@ -4,15 +4,14 @@ All generated functions are imported and assigned to MCP groups.
 Functions not explicitly grouped become standalone ROOT tools.
 """
 
-from importlib.metadata import version
 import inspect
 import re
+from importlib.metadata import version
 
-from ._generated import *  # noqa: F403 — re-export all generated ops
 from . import _generated
+from ._generated import *  # re-export all generated ops
 from ._helpers import _get_client
-from .registry import Group, ROOT, _op
-
+from .registry import ROOT, Group, _op
 
 # ── Groups ──────────────────────────────────────────────────────────────────
 
@@ -327,7 +326,7 @@ def glitchtip_version():
             "status": "ok",
             "version": response["version"],
         }
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - version check must not crash the whole tool
         service = {"status": "error"}
     return {
         "mcp": version("glitchtip-mcp"),
