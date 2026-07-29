@@ -4,13 +4,13 @@ import inspect
 import types
 import typing
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from . import tools as _tools_module
 from .annotations import ANNOTATIONS
 from .registry import ROOT
 
-mcp = FastMCP("glitchtip")
+mcp = MCPServer("glitchtip")
 
 
 def _to_pascal(name: str) -> str:
