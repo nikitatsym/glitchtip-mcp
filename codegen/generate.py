@@ -29,7 +29,7 @@ PY_KEYWORDS = set(keyword.kwlist) | {"params", "json"}
 
 
 def load_spec(path: Path) -> dict:
-    with path.open() as f:
+    with path.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -349,7 +349,12 @@ def main() -> None:
         out_lines.append("")
         out_lines.append("")
 
-    OUT.write_text("\n".join(out_lines).rstrip() + "\n")
+    # Non-ASCII section markers and spec-derived docstrings make a locale-default
+    # encoding truncate the module mid-write on Windows; newline pins the output
+    # byte-identical across platforms.
+    OUT.write_text(
+        "\n".join(out_lines).rstrip() + "\n", encoding="utf-8", newline="\n"
+    )
     print(f"wrote {OUT} ({sum(1 for _ in funcs)} operations)")
 
 

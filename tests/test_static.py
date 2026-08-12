@@ -10,7 +10,7 @@ from pathlib import Path
 
 def test_generated_module_parses():
     src = Path(__file__).resolve().parents[1] / "src" / "glitchtip_mcp" / "_generated.py"
-    ast.parse(src.read_text())
+    ast.parse(src.read_text(encoding="utf-8"))
 
 
 def test_module_imports():
@@ -195,7 +195,7 @@ def test_codegen_is_idempotent(tmp_path):
 
     repo = Path(__file__).resolve().parents[1]
     out = repo / "src" / "glitchtip_mcp" / "_generated.py"
-    before = out.read_text()
+    before = out.read_text(encoding="utf-8")
     subprocess.run([sys.executable, "codegen/generate.py"], cwd=repo, check=True)
-    after = out.read_text()
+    after = out.read_text(encoding="utf-8")
     assert before == after
