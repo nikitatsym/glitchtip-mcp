@@ -20,7 +20,7 @@ glitchtip_read = Group(
     "Query GlitchTip resources (safe, read-only).\n\n"
     "Call with operation=\"help\" to list all available read operations.\n"
     "Otherwise pass the operation name and a JSON object with parameters.\n\n"
-    "Example: glitchtip_read(operation=\"ListIssues\", "
+    "Example: glitchtip_read(operation=\"IssuesListIssues\", "
     "params={\"organization_slug\": \"my-org\"})",
 )
 

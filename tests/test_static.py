@@ -7,6 +7,8 @@ import inspect
 import os
 from pathlib import Path
 
+import pytest
+
 
 def test_generated_module_parses():
     src = Path(__file__).resolve().parents[1] / "src" / "glitchtip_mcp" / "_generated.py"
@@ -74,6 +76,42 @@ def test_help_renders_for_every_group():
         text = server._build_help(group_name)
         assert "operations available" in text
         assert text.count("\n") >= len(server._group_ops[group_name])
+
+
+def test_group_doc_examples_name_registered_operations():
+    os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
+    os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
+    from glitchtip_mcp import server, tools
+    from glitchtip_mcp.registry import Group
+
+    groups = [
+        obj
+        for _, obj in inspect.getmembers(tools, lambda o: isinstance(o, Group))
+        if obj.name in server._group_ops
+    ]
+    assert len(groups) == len(server._group_ops)
+    for group in groups:
+        for name in server._EXAMPLE_OPERATION.findall(group.doc):
+            if name == "help":
+                continue
+            assert name in server._group_ops[group.name], (
+                f"{group.name} example names {name!r}, which it does not expose"
+            )
+
+
+def test_doc_example_validation_rejects_unknown_operation():
+    os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
+    os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
+    from glitchtip_mcp import server
+
+    with pytest.raises(RuntimeError, match="NoSuchOp"):
+        server._validate_doc_examples(
+            "glitchtip_read",
+            'Example: glitchtip_read(operation="NoSuchOp")',
+            {"IssuesListIssues": None},
+        )
+
+    server._validate_doc_examples("glitchtip_read", 'operation="help"', {})
 
 
 class _VersionClient:
