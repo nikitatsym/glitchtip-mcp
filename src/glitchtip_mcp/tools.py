@@ -18,41 +18,41 @@ from .registry import ROOT, Group, _op
 glitchtip_read = Group(
     "glitchtip_read",
     "Query GlitchTip resources (safe, read-only).\n\n"
-    "Call with operation=\"help\" to list all available read operations.\n"
+    "Call with operation=\"$help\" to list all available read operations.\n"
     "Otherwise pass the operation name and a JSON object with parameters.\n\n"
-    "Example: glitchtip_read(operation=\"IssuesListIssues\", "
+    "Example: glitchtip_read(operation=\"$IssuesListIssues\", "
     "params={\"organization_slug\": \"my-org\"})",
 )
 
 glitchtip_write = Group(
     "glitchtip_write",
     "Create or update GlitchTip resources.\n\n"
-    "Call with operation=\"help\" to list all available write operations.\n"
+    "Call with operation=\"$help\" to list all available write operations.\n"
     "Otherwise pass the operation name and a JSON object with parameters.\n\n"
-    "Example: glitchtip_write(operation=\"CreateProject\", "
+    "Example: glitchtip_write(operation=\"$CreateProject\", "
     "params={\"organization_slug\": \"org\", \"team_slug\": \"team\", \"name\": \"web\"})",
 )
 
 glitchtip_delete = Group(
     "glitchtip_delete",
     "Delete GlitchTip resources (destructive, irreversible).\n\n"
-    "Call with operation=\"help\" to list all available delete operations.\n"
+    "Call with operation=\"$help\" to list all available delete operations.\n"
     "Otherwise pass the operation name and a JSON object with parameters.\n\n"
-    "Example: glitchtip_delete(operation=\"DeleteProject\", "
+    "Example: glitchtip_delete(operation=\"$DeleteProject\", "
     "params={\"organization_slug\": \"org\", \"project_slug\": \"web\"})",
 )
 
 glitchtip_admin_read = Group(
     "glitchtip_admin_read",
     "Query auth tokens, billing, user account, setup wizards, debug-file uploads.\n\n"
-    "Call with operation=\"help\" to list all available admin read operations.",
+    "Call with operation=\"$help\" to list all available admin read operations.",
 )
 
 glitchtip_admin_write = Group(
     "glitchtip_admin_write",
     "Manage auth tokens, user account, billing, recovery codes, debug-file uploads, "
     "Sentry SDK ingest endpoints, setup wizards.\n\n"
-    "Call with operation=\"help\" to list all available admin write operations.",
+    "Call with operation=\"$help\" to list all available admin write operations.",
 )
 
 
