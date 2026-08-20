@@ -71,5 +71,10 @@ class GlitchTipClient:
     def patch(self, path: str, json: dict | list | None = None, params: dict | None = None):
         return self._call("PATCH", path, params=params, json=json)
 
-    def delete(self, path: str, params: dict | None = None):
-        return self._call("DELETE", path, params=params)
+    def delete(
+        self,
+        path: str,
+        json: dict | list | None = None,
+        params: dict | None = None,
+    ):
+        return self._call("DELETE", path, params=params, json=json)

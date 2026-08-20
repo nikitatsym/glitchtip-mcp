@@ -742,9 +742,10 @@ def user_reports_list_user_reports(issue_id: str, limit: int | None = None, curs
 def accept_invite(org_user_id: str, token: str, acceptInvite: bool):
     """Accept Invite"""
     _b: dict = {}
-    if acceptInvite is not None:
-        _b['acceptInvite'] = acceptInvite
-    return _ok(_get_client().post(f"/api/0/accept/{org_user_id}/{token}/", _b or None))
+    if acceptInvite is None:
+        raise ValueError("Required request field acceptInvite cannot be null")
+    _b['acceptInvite'] = acceptInvite
+    return _ok(_get_client().post(f"/api/0/accept/{org_user_id}/{token}/", _b))
 
 
 def add_member_to_team(organization_slug: str, member_id: str, team_slug: str):
@@ -760,88 +761,101 @@ def add_team_to_project(organization_slug: str, project_slug: str, team_slug: st
 def artifact_bundle_assemble(organization_slug: str, checksum: str, chunks: list[str], projects: list[str], version: str | None = None):
     """Artifact Bundle Assemble"""
     _b: dict = {}
-    if checksum is not None:
-        _b['checksum'] = checksum
-    if chunks is not None:
-        _b['chunks'] = chunks
-    if projects is not None:
-        _b['projects'] = projects
+    if checksum is None:
+        raise ValueError("Required request field checksum cannot be null")
+    _b['checksum'] = checksum
+    if chunks is None:
+        raise ValueError("Required request field chunks cannot be null")
+    _b['chunks'] = chunks
+    if projects is None:
+        raise ValueError("Required request field projects cannot be null")
+    _b['projects'] = projects
     if version is not None:
         _b['version'] = version
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/artifactbundle/assemble/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/artifactbundle/assemble/", _b))
 
 
 def assemble_release(organization_slug: str, version: str, checksum: str, chunks: list[str]):
     """Assemble Release"""
     _b: dict = {}
-    if checksum is not None:
-        _b['checksum'] = checksum
-    if chunks is not None:
-        _b['chunks'] = chunks
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/{version}/assemble/", _b or None))
+    if checksum is None:
+        raise ValueError("Required request field checksum cannot be null")
+    _b['checksum'] = checksum
+    if chunks is None:
+        raise ValueError("Required request field chunks cannot be null")
+    _b['chunks'] = chunks
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/{version}/assemble/", _b))
 
 
-def chunk_upload(organization_slug: str, body: dict | list | None = None):
+def chunk_upload(organization_slug: str, body: dict | list):
     """Chunk Upload"""
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/chunk-upload/", body))
 
 
 def comments_add_comment(issue_id: str, data: dict):
     """Add Comment"""
     _b: dict = {}
-    if data is not None:
-        _b['data'] = data
-    return _ok(_get_client().post(f"/api/0/issues/{issue_id}/comments/", _b or None))
+    if data is None:
+        raise ValueError("Required request field data cannot be null")
+    _b['data'] = data
+    return _ok(_get_client().post(f"/api/0/issues/{issue_id}/comments/", _b))
 
 
 def create_api_token(scopes: int, label: str | None = None):
     """Create Api Token"""
     _b: dict = {}
-    if scopes is not None:
-        _b['scopes'] = scopes
+    if scopes is None:
+        raise ValueError("Required request field scopes cannot be null")
+    _b['scopes'] = scopes
     if label is not None:
         _b['label'] = label
-    return _ok(_get_client().post("/api/0/api-tokens/", _b or None))
+    return _ok(_get_client().post("/api/0/api-tokens/", _b))
 
 
-def create_commits(organization_slug: str, version: str, body: dict | list | None = None):
+def create_commits(organization_slug: str, version: str, body: dict | list):
     """Create Commits"""
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/{version}/commits/", body))
 
 
 def create_deploy(organization_slug: str, version: str, environment: str, url: str | None = None, dateStarted: str | None = None, dateFinished: str | None = None):
     """Create Deploy"""
     _b: dict = {}
-    if environment is not None:
-        _b['environment'] = environment
+    if environment is None:
+        raise ValueError("Required request field environment cannot be null")
+    _b['environment'] = environment
     if url is not None:
         _b['url'] = url
     if dateStarted is not None:
         _b['dateStarted'] = dateStarted
     if dateFinished is not None:
         _b['dateFinished'] = dateFinished
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/{version}/deploys/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/{version}/deploys/", _b))
 
 
 def create_email(user_id: str, email: str):
     """Create Email"""
     _b: dict = {}
-    if email is not None:
-        _b['email'] = email
-    return _ok(_get_client().post(f"/api/0/users/{user_id}/emails/", _b or None))
+    if email is None:
+        raise ValueError("Required request field email cannot be null")
+    _b['email'] = email
+    return _ok(_get_client().post(f"/api/0/users/{user_id}/emails/", _b))
 
 
-def create_monitor(organization_slug: str, expectedBody: str, expectedStatus: int, timeout: int, name: str, project: str | None = None, monitorType: str | None = None, url: str | None = None, interval: int | None = None):
+def create_monitor(organization_slug: str, expectedBody: str, expectedStatus: int | None, timeout: int | None, name: str, project: str | None = None, monitorType: str | None = None, url: str | None = None, interval: int | None = None):
     """Create Monitor"""
     _b: dict = {}
-    if expectedBody is not None:
-        _b['expectedBody'] = expectedBody
-    if expectedStatus is not None:
-        _b['expectedStatus'] = expectedStatus
-    if timeout is not None:
-        _b['timeout'] = timeout
-    if name is not None:
-        _b['name'] = name
+    if expectedBody is None:
+        raise ValueError("Required request field expectedBody cannot be null")
+    _b['expectedBody'] = expectedBody
+    _b['expectedStatus'] = expectedStatus
+    _b['timeout'] = timeout
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if project is not None:
         _b['project'] = project
     if monitorType is not None:
@@ -850,45 +864,49 @@ def create_monitor(organization_slug: str, expectedBody: str, expectedStatus: in
         _b['url'] = url
     if interval is not None:
         _b['interval'] = interval
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/monitors/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/monitors/", _b))
 
 
 def create_organization(name: str):
     """Create Organization"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
-    return _ok(_get_client().post("/api/0/organizations/", _b or None))
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
+    return _ok(_get_client().post("/api/0/organizations/", _b))
 
 
 def create_organization_member(organization_slug: str, orgRole: Literal['member', 'admin', 'manager', 'owner'], email: str, teamRoles: list[dict] | None = None, sendInvite: bool | None = None, reinvite: bool | None = None):
     """Create Organization Member"""
     _b: dict = {}
-    if orgRole is not None:
-        _b['orgRole'] = orgRole
-    if email is not None:
-        _b['email'] = email
+    if orgRole is None:
+        raise ValueError("Required request field orgRole cannot be null")
+    _b['orgRole'] = orgRole
+    if email is None:
+        raise ValueError("Required request field email cannot be null")
+    _b['email'] = email
     if teamRoles is not None:
         _b['teamRoles'] = teamRoles
     if sendInvite is not None:
         _b['sendInvite'] = sendInvite
     if reinvite is not None:
         _b['reinvite'] = reinvite
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/members/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/members/", _b))
 
 
 def create_project(organization_slug: str, team_slug: str, name: str, slug: str | None = None, platform: str | None = None, eventThrottleRate: int | None = None):
     """Create Project"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if slug is not None:
         _b['slug'] = slug
     if platform is not None:
         _b['platform'] = platform
     if eventThrottleRate is not None:
         _b['eventThrottleRate'] = eventThrottleRate
-    return _ok(_get_client().post(f"/api/0/teams/{organization_slug}/{team_slug}/projects/", _b or None))
+    return _ok(_get_client().post(f"/api/0/teams/{organization_slug}/{team_slug}/projects/", _b))
 
 
 def create_project_alert(organization_slug: str, project_slug: str, name: str | None = None, alertRecipients: list[dict] | None = None, timespanMinutes: int | None = None, quantity: int | None = None, uptime: bool | None = None):
@@ -904,7 +922,7 @@ def create_project_alert(organization_slug: str, project_slug: str, name: str | 
         _b['quantity'] = quantity
     if uptime is not None:
         _b['uptime'] = uptime
-    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/alerts/", _b or None))
+    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/alerts/", _b))
 
 
 def create_project_key(organization_slug: str, project_slug: str, name: str | None = None, rateLimit: dict | None = None):
@@ -914,96 +932,109 @@ def create_project_key(organization_slug: str, project_slug: str, name: str | No
         _b['name'] = name
     if rateLimit is not None:
         _b['rateLimit'] = rateLimit
-    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/keys/", _b or None))
+    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/keys/", _b))
 
 
 def create_project_release(organization_slug: str, project_slug: str, version: str, ref: str | None = None, dateReleased: str | None = None):
     """Create Project Release"""
     _b: dict = {}
-    if version is not None:
-        _b['version'] = version
+    if version is None:
+        raise ValueError("Required request field version cannot be null")
+    _b['version'] = version
     if ref is not None:
         _b['ref'] = ref
     if dateReleased is not None:
         _b['dateReleased'] = dateReleased
-    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/releases/", _b or None))
+    return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/releases/", _b))
 
 
 def create_release(organization_slug: str, version: str, projects: list[str], ref: str | None = None, dateReleased: str | None = None):
     """Create Release"""
     _b: dict = {}
-    if version is not None:
-        _b['version'] = version
-    if projects is not None:
-        _b['projects'] = projects
+    if version is None:
+        raise ValueError("Required request field version cannot be null")
+    _b['version'] = version
+    if projects is None:
+        raise ValueError("Required request field projects cannot be null")
+    _b['projects'] = projects
     if ref is not None:
         _b['ref'] = ref
     if dateReleased is not None:
         _b['dateReleased'] = dateReleased
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/releases/", _b))
 
 
 def create_repository(organization_slug: str, name: str, url: str | None = None, provider: dict | None = None):
     """Create Repository"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if url is not None:
         _b['url'] = url
     if provider is not None:
         _b['provider'] = provider
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/repos/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/repos/", _b))
 
 
 def create_status_page(organization_slug: str, name: str, isPublic: bool | None = None):
     """Create Status Page"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if isPublic is not None:
         _b['isPublic'] = isPublic
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/status-pages/", _b or None))
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/status-pages/", _b))
 
 
 def create_stripe_session(organization_slug: str, price: str):
     """Create Stripe Session"""
     _b: dict = {}
-    if price is not None:
-        _b['price'] = price
-    return _ok(_get_client().post(f"/api/0/stripe/organizations/{organization_slug}/create-stripe-subscription-checkout/", _b or None))
+    if price is None:
+        raise ValueError("Required request field price cannot be null")
+    _b['price'] = price
+    return _ok(_get_client().post(f"/api/0/stripe/organizations/{organization_slug}/create-stripe-subscription-checkout/", _b))
 
 
 def create_team(organization_slug: str, slug: str):
     """Create Team"""
     _b: dict = {}
-    if slug is not None:
-        _b['slug'] = slug
-    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/teams/", _b or None))
+    if slug is None:
+        raise ValueError("Required request field slug cannot be null")
+    _b['slug'] = slug
+    return _ok(_get_client().post(f"/api/0/organizations/{organization_slug}/teams/", _b))
 
 
-def difs_assemble_api(organization_slug: str, project_slug: str, body: dict | list | None = None):
+def difs_assemble_api(organization_slug: str, project_slug: str, body: dict | list):
     """Difs Assemble Api"""
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/files/difs/assemble/", body))
 
 
-def dsyms(organization_slug: str, project_slug: str, body: dict | list | None = None):
+def dsyms(organization_slug: str, project_slug: str, body: dict | list):
     """Dsyms"""
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().post(f"/api/0/projects/{organization_slug}/{project_slug}/files/dsyms/", body))
 
 
 def event_security(project_id: str, csp_report: dict):
     """Event Security"""
     _b: dict = {}
-    if csp_report is not None:
-        _b['csp-report'] = csp_report
-    return _ok(_get_client().post(f"/api/{project_id}/security/", _b or None))
+    if csp_report is None:
+        raise ValueError("Required request field csp-report cannot be null")
+    _b['csp-report'] = csp_report
+    return _ok(_get_client().post(f"/api/{project_id}/security/", _b))
 
 
 def event_store(project_id: str, event_id: str, platform: str | None = None, errors: list[dict] | None = None, timestamp: str | None = None, level: str | None = None, logentry: dict | None = None, logger: str | None = None, transaction: str | None = None, server_name: str | None = None, release: str | None = None, dist: str | None = None, tags: list[list[str]] | None = None, environment: str | None = None, modules: dict | None = None, extra: dict | None = None, fingerprint: list[str] | None = None, exception: dict | None = None, threads: dict | None = None, message: str | None = None, template: dict | None = None, breadcrumbs: dict | None = None, sdk: dict | None = None, request: dict | None = None, contexts: dict | None = None, user: dict | None = None, debug_meta: dict | None = None):
     """Event Store"""
     _b: dict = {}
-    if event_id is not None:
-        _b['event_id'] = event_id
+    if event_id is None:
+        raise ValueError("Required request field event_id cannot be null")
+    _b['event_id'] = event_id
     if platform is not None:
         _b['platform'] = platform
     if errors is not None:
@@ -1054,7 +1085,7 @@ def event_store(project_id: str, event_id: str, platform: str | None = None, err
         _b['user'] = user
     if debug_meta is not None:
         _b['debug_meta'] = debug_meta
-    return _ok(_get_client().post(f"/api/{project_id}/store/", _b or None))
+    return _ok(_get_client().post(f"/api/{project_id}/store/", _b))
 
 
 def heartbeat_check(organization_slug: str, endpoint_id: str):
@@ -1065,13 +1096,16 @@ def heartbeat_check(organization_slug: str, endpoint_id: str):
 def importer(url: str, authToken: str, organizationSlug: str):
     """Importer"""
     _b: dict = {}
-    if url is not None:
-        _b['url'] = url
-    if authToken is not None:
-        _b['authToken'] = authToken
-    if organizationSlug is not None:
-        _b['organizationSlug'] = organizationSlug
-    return _ok(_get_client().post("/api/0/import/", _b or None))
+    if url is None:
+        raise ValueError("Required request field url cannot be null")
+    _b['url'] = url
+    if authToken is None:
+        raise ValueError("Required request field authToken cannot be null")
+    _b['authToken'] = authToken
+    if organizationSlug is None:
+        raise ValueError("Required request field organizationSlug cannot be null")
+    _b['organizationSlug'] = organizationSlug
+    return _ok(_get_client().post("/api/0/import/", _b))
 
 
 def project_reprocessing(organization_slug: str, project_slug: str):
@@ -1082,9 +1116,10 @@ def project_reprocessing(organization_slug: str, project_slug: str):
 def send_confirm_email(user_id: str, email: str):
     """Send Confirm Email"""
     _b: dict = {}
-    if email is not None:
-        _b['email'] = email
-    return _ok(_get_client().post(f"/api/0/users/{user_id}/emails/confirm/", _b or None))
+    if email is None:
+        raise ValueError("Required request field email cannot be null")
+    _b['email'] = email
+    return _ok(_get_client().post(f"/api/0/users/{user_id}/emails/confirm/", _b))
 
 
 def set_organization_owner(organization_slug: str, member_id: str):
@@ -1095,17 +1130,19 @@ def set_organization_owner(organization_slug: str, member_id: str):
 def set_recovery_codes(code: str):
     """Set Recovery Codes"""
     _b: dict = {}
-    if code is not None:
-        _b['code'] = code
-    return _ok(_get_client().post("/api/0/generate-recovery-codes/", _b or None))
+    if code is None:
+        raise ValueError("Required request field code cannot be null")
+    _b['code'] = code
+    return _ok(_get_client().post("/api/0/generate-recovery-codes/", _b))
 
 
 def setup_wizard_set_token(hash: str):
     """Setup Wizard Set Token"""
     _b: dict = {}
-    if hash is not None:
-        _b['hash'] = hash
-    return _ok(_get_client().post("/api/0/wizard-set-token/", _b or None))
+    if hash is None:
+        raise ValueError("Required request field hash cannot be null")
+    _b['hash'] = hash
+    return _ok(_get_client().post("/api/0/wizard-set-token/", _b))
 
 
 def stripe_billing_portal_session(organization_slug: str):
@@ -1116,14 +1153,16 @@ def stripe_billing_portal_session(organization_slug: str):
 def stripe_create_subscription(price: str, organization: str):
     """Stripe Create Subscription"""
     _b: dict = {}
-    if price is not None:
-        _b['price'] = price
-    if organization is not None:
-        _b['organization'] = organization
-    return _ok(_get_client().post("/api/0/stripe/subscriptions/", _b or None))
+    if price is None:
+        raise ValueError("Required request field price cannot be null")
+    _b['price'] = price
+    if organization is None:
+        raise ValueError("Required request field organization cannot be null")
+    _b['organization'] = organization
+    return _ok(_get_client().post("/api/0/stripe/subscriptions/", _b))
 
 
-def submit_embed_error_page(dsn: str, eventId: str, title: str | None = None, subtitle: str | None = None, subtitle2: str | None = None, labelName: str | None = None, labelEmail: str | None = None, labelComments: str | None = None, labelClose: str | None = None, labelSubmit: str | None = None, errorGeneric: str | None = None, errorFormEntry: str | None = None, successMessage: str | None = None, name: str | None = None, email: str | None = None, body: dict | list | None = None):
+def submit_embed_error_page(dsn: str, eventId: str, body: dict | list, title: str | None = None, subtitle: str | None = None, subtitle2: str | None = None, labelName: str | None = None, labelEmail: str | None = None, labelComments: str | None = None, labelClose: str | None = None, labelSubmit: str | None = None, errorGeneric: str | None = None, errorFormEntry: str | None = None, successMessage: str | None = None, name: str | None = None, email: str | None = None):
     """Submit Embed Error Page"""
     _q: dict = {}
     if dsn is not None:
@@ -1156,6 +1195,8 @@ def submit_embed_error_page(dsn: str, eventId: str, title: str | None = None, su
         _q['name'] = name
     if email is not None:
         _q['email'] = email
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().post("/api/embed/error-page/", body, params=_q or None))
 
 
@@ -1172,9 +1213,10 @@ def test_project_alert(organization_slug: str, project_slug: str, alert_id: str,
 def comments_update_comment(issue_id: str, comment_id: str, data: dict):
     """Update Comment"""
     _b: dict = {}
-    if data is not None:
-        _b['data'] = data
-    return _ok(_get_client().put(f"/api/0/issues/{issue_id}/comments/{comment_id}/", _b or None))
+    if data is None:
+        raise ValueError("Required request field data cannot be null")
+    _b['data'] = data
+    return _ok(_get_client().put(f"/api/0/issues/{issue_id}/comments/{comment_id}/", _b))
 
 
 def issues_update_issue(issue_id: str, status: Literal['unresolved', 'resolved', 'ignored'] | None = None, statusDetails: dict | None = None, merge: int | None = None):
@@ -1186,7 +1228,7 @@ def issues_update_issue(issue_id: str, status: Literal['unresolved', 'resolved',
         _b['statusDetails'] = statusDetails
     if merge is not None:
         _b['merge'] = merge
-    return _ok(_get_client().put(f"/api/0/issues/{issue_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/issues/{issue_id}/", _b))
 
 
 def issues_update_issues(organization_slug: str, id: list[int] | None = None, start: str | None = None, end: str | None = None, project: list[int] | None = None, environment: list[str] | None = None, query: str | None = None, status: Literal['unresolved', 'resolved', 'ignored'] | None = None, statusDetails: dict | None = None, merge: int | None = None):
@@ -1211,7 +1253,7 @@ def issues_update_issues(organization_slug: str, id: list[int] | None = None, st
         _b['statusDetails'] = statusDetails
     if merge is not None:
         _b['merge'] = merge
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/issues/", _b or None, params=_q or None))
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/issues/", _b, params=_q or None))
 
 
 def issues_update_organization_issue(organization_slug: str, issue_id: str, status: Literal['unresolved', 'resolved', 'ignored'] | None = None, statusDetails: dict | None = None, merge: int | None = None):
@@ -1223,38 +1265,41 @@ def issues_update_organization_issue(organization_slug: str, issue_id: str, stat
         _b['statusDetails'] = statusDetails
     if merge is not None:
         _b['merge'] = merge
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/issues/{issue_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/issues/{issue_id}/", _b))
 
 
 def set_email_as_primary(user_id: str, email: str):
     """Set Email As Primary"""
     _b: dict = {}
-    if email is not None:
-        _b['email'] = email
-    return _ok(_get_client().put(f"/api/0/users/{user_id}/emails/", _b or None))
+    if email is None:
+        raise ValueError("Required request field email cannot be null")
+    _b['email'] = email
+    return _ok(_get_client().put(f"/api/0/users/{user_id}/emails/", _b))
 
 
 def update_environment_project(organization_slug: str, project_slug: str, name: str, name_body: str, isHidden: bool):
     """Update Environment Project"""
     _b: dict = {}
-    if name_body is not None:
-        _b['name'] = name_body
-    if isHidden is not None:
-        _b['isHidden'] = isHidden
-    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/environments/{name}/", _b or None))
+    if name_body is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name_body
+    if isHidden is None:
+        raise ValueError("Required request field isHidden cannot be null")
+    _b['isHidden'] = isHidden
+    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/environments/{name}/", _b))
 
 
-def update_monitor(organization_slug: str, monitor_id: str, expectedBody: str, expectedStatus: int, timeout: int, name: str, project: str | None = None, monitorType: str | None = None, url: str | None = None, interval: int | None = None):
+def update_monitor(organization_slug: str, monitor_id: str, expectedBody: str, expectedStatus: int | None, timeout: int | None, name: str, project: str | None = None, monitorType: str | None = None, url: str | None = None, interval: int | None = None):
     """Update Monitor"""
     _b: dict = {}
-    if expectedBody is not None:
-        _b['expectedBody'] = expectedBody
-    if expectedStatus is not None:
-        _b['expectedStatus'] = expectedStatus
-    if timeout is not None:
-        _b['timeout'] = timeout
-    if name is not None:
-        _b['name'] = name
+    if expectedBody is None:
+        raise ValueError("Required request field expectedBody cannot be null")
+    _b['expectedBody'] = expectedBody
+    _b['expectedStatus'] = expectedStatus
+    _b['timeout'] = timeout
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if project is not None:
         _b['project'] = project
     if monitorType is not None:
@@ -1263,7 +1308,7 @@ def update_monitor(organization_slug: str, monitor_id: str, expectedBody: str, e
         _b['url'] = url
     if interval is not None:
         _b['interval'] = interval
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/monitors/{monitor_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/monitors/{monitor_id}/", _b))
 
 
 def update_notifications(user_id: str, subscribeByDefault: bool | None = None):
@@ -1271,39 +1316,42 @@ def update_notifications(user_id: str, subscribeByDefault: bool | None = None):
     _b: dict = {}
     if subscribeByDefault is not None:
         _b['subscribeByDefault'] = subscribeByDefault
-    return _ok(_get_client().put(f"/api/0/users/{user_id}/notifications/", _b or None))
+    return _ok(_get_client().put(f"/api/0/users/{user_id}/notifications/", _b))
 
 
 def update_organization(organization_slug: str, name: str):
     """Update Organization"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/", _b or None))
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/", _b))
 
 
 def update_organization_member(organization_slug: str, member_id: str, orgRole: Literal['member', 'admin', 'manager', 'owner'], teamRoles: list[dict] | None = None):
     """Update Organization Member"""
     _b: dict = {}
-    if orgRole is not None:
-        _b['orgRole'] = orgRole
+    if orgRole is None:
+        raise ValueError("Required request field orgRole cannot be null")
+    _b['orgRole'] = orgRole
     if teamRoles is not None:
         _b['teamRoles'] = teamRoles
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/members/{member_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/members/{member_id}/", _b))
 
 
 def update_project(organization_slug: str, project_slug: str, name: str, slug: str | None = None, platform: str | None = None, eventThrottleRate: int | None = None):
     """Update Project"""
     _b: dict = {}
-    if name is not None:
-        _b['name'] = name
+    if name is None:
+        raise ValueError("Required request field name cannot be null")
+    _b['name'] = name
     if slug is not None:
         _b['slug'] = slug
     if platform is not None:
         _b['platform'] = platform
     if eventThrottleRate is not None:
         _b['eventThrottleRate'] = eventThrottleRate
-    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/", _b))
 
 
 def update_project_alert(organization_slug: str, project_slug: str, alert_id: str, name: str | None = None, alertRecipients: list[dict] | None = None, timespanMinutes: int | None = None, quantity: int | None = None, uptime: bool | None = None):
@@ -1319,7 +1367,7 @@ def update_project_alert(organization_slug: str, project_slug: str, alert_id: st
         _b['quantity'] = quantity
     if uptime is not None:
         _b['uptime'] = uptime
-    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/alerts/{alert_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/alerts/{alert_id}/", _b))
 
 
 def update_project_key(organization_slug: str, project_slug: str, key_id: str, name: str | None = None, rateLimit: dict | None = None):
@@ -1329,7 +1377,7 @@ def update_project_key(organization_slug: str, project_slug: str, key_id: str, n
         _b['name'] = name
     if rateLimit is not None:
         _b['rateLimit'] = rateLimit
-    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/keys/{key_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/keys/{key_id}/", _b))
 
 
 def update_project_release(organization_slug: str, project_slug: str, version: str, ref: str | None = None, dateReleased: str | None = None):
@@ -1339,7 +1387,7 @@ def update_project_release(organization_slug: str, project_slug: str, version: s
         _b['ref'] = ref
     if dateReleased is not None:
         _b['dateReleased'] = dateReleased
-    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/releases/{version}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/projects/{organization_slug}/{project_slug}/releases/{version}/", _b))
 
 
 def update_release(organization_slug: str, version: str, ref: str | None = None, dateReleased: str | None = None):
@@ -1349,29 +1397,33 @@ def update_release(organization_slug: str, version: str, ref: str | None = None,
         _b['ref'] = ref
     if dateReleased is not None:
         _b['dateReleased'] = dateReleased
-    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/releases/{version}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/organizations/{organization_slug}/releases/{version}/", _b))
 
 
 def update_team(organization_slug: str, team_slug: str, slug: str):
     """Update Team"""
     _b: dict = {}
-    if slug is not None:
-        _b['slug'] = slug
-    return _ok(_get_client().put(f"/api/0/teams/{organization_slug}/{team_slug}/", _b or None))
+    if slug is None:
+        raise ValueError("Required request field slug cannot be null")
+    _b['slug'] = slug
+    return _ok(_get_client().put(f"/api/0/teams/{organization_slug}/{team_slug}/", _b))
 
 
 def update_user(user_id: str, options: dict, name: str | None = None):
     """Update User"""
     _b: dict = {}
-    if options is not None:
-        _b['options'] = options
+    if options is None:
+        raise ValueError("Required request field options cannot be null")
+    _b['options'] = options
     if name is not None:
         _b['name'] = name
-    return _ok(_get_client().put(f"/api/0/users/{user_id}/", _b or None))
+    return _ok(_get_client().put(f"/api/0/users/{user_id}/", _b))
 
 
-def update_user_notification_alerts(user_id: str, body: dict | list | None = None):
+def update_user_notification_alerts(user_id: str, body: dict | list):
     """Update User Notification Alerts"""
+    if body is None:
+        raise ValueError("Required request body cannot be null")
     return _ok(_get_client().put(f"/api/0/users/{user_id}/notifications/alerts/", body))
 
 
@@ -1387,9 +1439,13 @@ def delete_api_token(token_id: str):
     return _ok(_get_client().delete(f"/api/0/api-tokens/{token_id}/"))
 
 
-def delete_email(user_id: str):
+def delete_email(user_id: str, email: str):
     """Delete Email"""
-    return _ok(_get_client().delete(f"/api/0/users/{user_id}/emails/"))
+    _b: dict = {}
+    if email is None:
+        raise ValueError("Required request field email cannot be null")
+    _b['email'] = email
+    return _ok(_get_client().delete(f"/api/0/users/{user_id}/emails/", _b))
 
 
 def delete_member_from_team(organization_slug: str, member_id: str, team_slug: str):

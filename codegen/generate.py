@@ -49,6 +49,26 @@ def resolve(spec: dict, schema: dict | None) -> dict:
         schema = node  # type: ignore[assignment]
     return schema if isinstance(schema, dict) else {}
 
+def allows_null(spec: dict, schema: dict | None) -> bool:
+    """Whether an OpenAPI schema permits a JSON null."""
+    s = resolve(spec, schema)
+    if s.get("nullable") is True:
+        return True
+    schema_type = s.get("type")
+    if schema_type == "null" or (
+        isinstance(schema_type, list) and "null" in schema_type
+    ):
+        return True
+    for key in ("anyOf", "oneOf"):
+        for variant in s.get(key, []):
+            v = resolve(spec, variant)
+            variant_type = v.get("type")
+            if v.get("nullable") is True or variant_type == "null" or (
+                isinstance(variant_type, list) and "null" in variant_type
+            ):
+                return True
+    return False
+
 
 def py_type(spec: dict, schema: dict | None) -> tuple[str, list[str]]:
     """Map an OpenAPI schema to (python type expression, [literal values])."""
@@ -143,26 +163,30 @@ def collect_params(spec: dict, op: dict) -> tuple[list[dict], list[dict], list[d
     return path_params, req_query, opt_query
 
 
-def body_fields(spec: dict, op: dict) -> tuple[str, list[tuple[str, dict, bool]]]:
-    """Return (schema_name, [(field, schema, required)]). Empty list → opaque body."""
+def body_fields(
+    spec: dict, op: dict
+) -> tuple[str, list[tuple[str, dict, bool]], bool, bool]:
+    """Return fields, body requiredness, and whether properties are declared."""
     body = op.get("requestBody")
     if not body:
-        return "", []
+        return "", [], False, False
     body = resolve(spec, body)
+    body_required = bool(body.get("required"))
     media = body.get("content", {}).get("application/json")
     if not media or "schema" not in media:
-        return "", []
+        return "", [], body_required, False
     schema = media["schema"]
     raw_name = ""
     if "$ref" in schema:
         raw_name = schema["$ref"].rsplit("/", 1)[-1]
     s = resolve(spec, schema)
     if s.get("type") != "object":
-        return raw_name, []
-    props = s.get("properties") or {}
+        return raw_name, [], body_required, False
+    has_declared_properties = isinstance(s.get("properties"), dict)
+    props = s["properties"] if has_declared_properties else {}
     required = set(s.get("required") or [])
     fields = [(n, p, n in required) for n, p in props.items()]
-    return raw_name, fields
+    return raw_name, fields, body_required, has_declared_properties
 
 
 # ── Code emission ───────────────────────────────────────────────────────────
@@ -173,7 +197,15 @@ def emit_function(spec: dict, path: str, method: str, op: dict) -> str:
     name = fn_name(op_id, method, path)
 
     path_params, req_query, opt_query = collect_params(spec, op)
-    _body_schema_name, fields = body_fields(spec, op)
+    _body_schema_name, fields, body_required, has_declared_properties = body_fields(
+        spec, op
+    )
+    has_opaque_body = (
+        not fields
+        and op.get("requestBody")
+        and not (body_required and has_declared_properties)
+    )
+
 
     # gather signature
     sig_parts: list[str] = []
@@ -187,17 +219,20 @@ def emit_function(spec: dict, path: str, method: str, op: dict) -> str:
         sig_parts.append(f"{a}: str")
 
     # required body fields
-    body_arg_names: list[tuple[str, str, str, list[str]]] = []
-    if method.upper() in ("POST", "PUT", "PATCH") and fields:
+    body_arg_names: list[tuple[str, str, bool, bool]] = []
+    if fields:
         for fname, fschema, is_req in [(n, s, r) for n, s, r in fields if r]:
             a = safe_arg(fname)
             if a in used:
                 a = a + "_body"
             used.add(a)
             arg_to_orig[a] = fname
-            t, lits = py_type(spec, fschema)
+            t, _lits = py_type(spec, fschema)
+            nullable = allows_null(spec, fschema)
+            if nullable:
+                t += " | None"
             sig_parts.append(f"{a}: {t}")
-            body_arg_names.append((a, fname, t, lits))
+            body_arg_names.append((a, fname, True, nullable))
 
     # required query params (rare)
     query_arg_names: list[tuple[str, str, str, list[str]]] = []
@@ -211,6 +246,9 @@ def emit_function(spec: dict, path: str, method: str, op: dict) -> str:
         sig_parts.append(f"{a}: {t}")
         query_arg_names.append((a, q["name"], t, lits))
 
+    if has_opaque_body and body_required:
+        sig_parts.append("body: dict | list")
+
     # optional query params
     for q in opt_query:
         a = safe_arg(q["name"])
@@ -223,26 +261,20 @@ def emit_function(spec: dict, path: str, method: str, op: dict) -> str:
         query_arg_names.append((a, q["name"], t, lits))
 
     # optional body fields
-    if method.upper() in ("POST", "PUT", "PATCH") and fields:
+    if fields:
         for fname, fschema, is_req in [(n, s, r) for n, s, r in fields if not r]:
             a = safe_arg(fname)
             if a in used:
                 a = a + "_body"
             used.add(a)
             arg_to_orig[a] = fname
-            t, lits = py_type(spec, fschema)
+            t, _lits = py_type(spec, fschema)
             sig_parts.append(f"{a}: {t} | None = None")
-            body_arg_names.append((a, fname, t, lits))
+            body_arg_names.append((a, fname, False, False))
 
-    # opaque body fallback when there are no flattenable fields but body is required
-    has_opaque_body = (
-        method.upper() in ("POST", "PUT", "PATCH")
-        and not fields
-        and op.get("requestBody")
-    )
-    if has_opaque_body:
+    # Optional opaque bodies stay after every required parameter.
+    if has_opaque_body and not body_required:
         sig_parts.append("body: dict | list | None = None")
-
     # ── body assembly ──
     lines: list[str] = []
     lines.append(f"def {name}({', '.join(sig_parts)}):")
@@ -266,34 +298,43 @@ def emit_function(spec: dict, path: str, method: str, op: dict) -> str:
             lines.append(f"        _q[{orig!r}] = {a}")
 
     # body dict
-    has_body_fields = method.upper() in ("POST", "PUT", "PATCH") and bool(body_arg_names)
+    has_body_fields = bool(body_arg_names)
     if has_body_fields:
         lines.append("    _b: dict = {}")
-        for a, orig, _t, _lits in body_arg_names:
-            lines.append(f"    if {a} is not None:")
-            lines.append(f"        _b[{orig!r}] = {a}")
+        for a, orig, is_required, nullable in body_arg_names:
+            if is_required:
+                if not nullable:
+                    lines.append(f"    if {a} is None:")
+                    lines.append(
+                        f"        raise ValueError(\"Required request field {orig} cannot be null\")"
+                    )
+                lines.append(f"    _b[{orig!r}] = {a}")
+            else:
+                lines.append(f"    if {a} is not None:")
+                lines.append(f"        _b[{orig!r}] = {a}")
+
+    if has_opaque_body and body_required:
+        lines.append("    if body is None:")
+        lines.append('        raise ValueError("Required request body cannot be null")')
 
     # call
     verb = method.lower()
     # plain string when there's no {placeholder} - an f-string would be pointless (F541)
     call_path = f"f\"{f_path}\"" if "{" in f_path else f"\"{f_path}\""
     args = []
-    if verb in ("post", "put", "patch"):
+    if verb in ("post", "put", "patch", "delete"):
         if has_body_fields:
-            args.append("_b or None")
+            args.append("_b" if body_required else "_b or None")
         elif has_opaque_body:
             args.append("body")
-        else:
+        elif body_required and has_declared_properties:
+            args.append("{}")
+        elif verb != "delete":
             args.append("None")
         if has_query:
             args.append("params=_q or None")
-        call_str = f"_get_client().{verb}({call_path}, {', '.join(args)})"
-    elif verb == "delete":
-        if has_query:
-            args.append("params=_q or None")
-            call_str = f"_get_client().delete({call_path}, {', '.join(args)})"
-        else:
-            call_str = f"_get_client().delete({call_path})"
+        call_args = f", {', '.join(args)}" if args else ""
+        call_str = f"_get_client().{verb}({call_path}{call_args})"
     else:  # get
         if has_query:
             call_str = f"_get_client().get({call_path}, params=_q or None)"

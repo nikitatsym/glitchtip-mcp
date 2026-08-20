@@ -103,7 +103,7 @@ def _coerce_call(fn, params: dict):
                 f"Invalid value {val!r} for {name}. "
                 f"Accepted: {', '.join(lit_vals)}"
             )
-        if hint and _is_bool_hint(hint) and not isinstance(val, bool):
+        if val is not None and hint and _is_bool_hint(hint) and not isinstance(val, bool):
             default = param.default
             if default is inspect.Parameter.empty or default is None:
                 default = False
