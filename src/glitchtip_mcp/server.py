@@ -6,10 +6,12 @@ import string
 import types
 import typing
 
+import httpx
 from mcp.server.mcpserver import MCPServer
 
 from . import tools as _tools_module
 from .annotations import ANNOTATIONS
+from .client import GlitchTipError
 from .registry import ROOT
 
 mcp = MCPServer("glitchtip")
@@ -90,6 +92,13 @@ def _coerce_call(fn, params: dict):
         raise ValueError(
             f"Unknown parameters: {sorted(unknown)}. Valid: {sorted(valid)}"
         )
+    missing = [
+        name
+        for name, param in sig.parameters.items()
+        if param.default is inspect.Parameter.empty and name not in params
+    ]
+    if missing:
+        raise ValueError(f"Missing required parameters: {', '.join(missing)}")
     hints = typing.get_type_hints(fn, include_extras=True)
     kwargs = {}
     for name, param in sig.parameters.items():
@@ -141,7 +150,20 @@ def _dispatch(operation: str, group_name: str, params: dict):
                      "Use operation=\"help\" to list available operations."
         }
     fn = ops[operation]
-    return _coerce_call(fn, params)
+    try:
+        return _coerce_call(fn, params)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except GlitchTipError as exc:
+        return {"error": str(exc)}
+    except httpx.RequestError as exc:
+        request = exc.request
+        return {
+            "error": (
+                f"GlitchTip request failed: {request.method} {request.url.path}: "
+                f"{type(exc).__name__}: {exc}"
+            )
+        }
 
 
 _HARDCODED_OPERATION = re.compile(r"""\boperation\s*=\s*["'](?![$<])""")

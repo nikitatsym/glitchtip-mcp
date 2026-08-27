@@ -11,6 +11,7 @@ import re
 import typing
 from pathlib import Path
 
+import httpx
 import pytest
 
 
@@ -143,6 +144,76 @@ def test_render_group_doc_resolves_meta_and_keeps_generic_form():
         "glitchtip_read", 'operation="$help" or operation="<OpName>"', {}
     )
     assert rendered == 'operation="help" or operation="<OpName>"'
+
+def test_dispatch_returns_glitchtip_api_error_context(monkeypatch):
+    from glitchtip_mcp import server
+    from glitchtip_mcp.client import GlitchTipError
+
+    def fail(organization_slug: str, monitor_id: str):
+        raise GlitchTipError(
+            503,
+            "GET",
+            f"/api/0/organizations/{organization_slug}/monitors/{monitor_id}/",
+            {"detail": "Service unavailable"},
+        )
+
+    monkeypatch.setitem(server._group_ops["glitchtip_read"], "GetMonitor", fail)
+
+    result = server._dispatch(
+        "GetMonitor",
+        "glitchtip_read",
+        {"organization_slug": "bizins", "monitor_id": "1"},
+    )
+
+    assert result == {
+        "error": (
+            "GlitchTip API 503 GET /api/0/organizations/bizins/monitors/1/: "
+            "{'detail': 'Service unavailable'}"
+        )
+    }
+
+
+def test_dispatch_returns_safe_transport_error_context(monkeypatch):
+    from glitchtip_mcp import server
+
+    request = httpx.Request(
+        "GET",
+        "https://errors.example/api/0/organizations/bizins/monitors/1/"
+        "?token=must-not-leak",
+    )
+
+    def fail(organization_slug: str, monitor_id: str):
+        raise httpx.ConnectError("Connection refused", request=request)
+
+    monkeypatch.setitem(server._group_ops["glitchtip_read"], "GetMonitor", fail)
+
+    result = server._dispatch(
+        "GetMonitor",
+        "glitchtip_read",
+        {"organization_slug": "bizins", "monitor_id": "1"},
+    )
+
+    assert result == {
+        "error": (
+            "GlitchTip request failed: "
+            "GET /api/0/organizations/bizins/monitors/1/: "
+            "ConnectError: Connection refused"
+        )
+    }
+    assert "must-not-leak" not in repr(result)
+
+
+def test_dispatch_reports_missing_required_parameters():
+    from glitchtip_mcp import server
+
+    result = server._dispatch(
+        "GetMonitor",
+        "glitchtip_read",
+        {"organization_slug": "bizins"},
+    )
+
+    assert result == {"error": "Missing required parameters: monitor_id"}
+
 
 
 class _BodyRecorder:
