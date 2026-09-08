@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import inspect
 import json
 import keyword
@@ -57,6 +58,35 @@ def test_group_registration_full_count():
     }
     actual = {g: len(ops) for g, ops in server._group_ops.items()}
     assert actual == expected, f"group counts changed: {actual}"
+
+
+def test_registered_tools_emit_compact_json():
+    os.environ.setdefault("GLITCHTIP_URL", "https://example.invalid")
+    os.environ.setdefault("GLITCHTIP_TOKEN", "noop")
+    from mcp.types import TextContent
+
+    from glitchtip_mcp import server
+
+    assert all(
+        tool.fn_metadata.output_schema is None
+        for tool in server.mcp._tool_manager.list_tools()
+    )
+
+    expected = {
+        "error": (
+            'Unknown operation: NotARealOp. Use operation="help" to list available operations.'
+        )
+    }
+    result = asyncio.run(
+        server.mcp.call_tool("glitchtip_read", {"operation": "NotARealOp"})
+    )
+
+    assert result.structured_content is None
+    assert len(result.content) == 1
+    content = result.content[0]
+    assert isinstance(content, TextContent)
+    assert "\n" not in content.text
+    assert json.loads(content.text) == expected
 
 
 def test_every_generated_function_has_docstring():

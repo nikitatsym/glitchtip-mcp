@@ -1,5 +1,6 @@
 """GlitchTip MCP server — auto-discovery, grouping, and dispatch."""
 
+import functools
 import inspect
 import re
 import string
@@ -7,7 +8,9 @@ import types
 import typing
 
 import httpx
-from mcp.server.mcpserver import MCPServer
+import pydantic_core
+from mcp.server.mcpserver import Image, MCPServer
+from mcp.types import ContentBlock, TextContent
 
 from . import tools as _tools_module
 from .annotations import ANNOTATIONS
@@ -19,6 +22,33 @@ mcp = MCPServer("glitchtip")
 
 def _to_pascal(name: str) -> str:
     return "".join(w.capitalize() for w in name.split("_"))
+
+
+def _compact(fn):
+    """Serialize a data result as one-line JSON.
+
+    The SDK pretty-prints non-string results (`indent=2`), which costs the
+    caller ~20% more tokens for nothing; a ready TextContent passes through
+    untouched. Strings, content blocks and images keep the SDK path. Mirrors
+    fn's sync/async flavor so a sync tool stays on the SDK worker thread.
+    """
+    def to_content(result):
+        if result is None or isinstance(result, str | ContentBlock | Image):
+            return result
+        return TextContent(
+            type="text", text=pydantic_core.to_json(result, fallback=str).decode()
+        )
+
+    if inspect.iscoroutinefunction(fn):
+        @functools.wraps(fn)
+        async def async_compact(*args, **kwargs):
+            return to_content(await fn(*args, **kwargs))
+        return async_compact
+
+    @functools.wraps(fn)
+    def sync_compact(*args, **kwargs):
+        return to_content(fn(*args, **kwargs))
+    return sync_compact
 
 
 def _parse_bool(val, default: bool) -> bool:
@@ -201,7 +231,7 @@ def _register_tools():
         assert fn.__doc__, f"Missing docstring for {name}"
         group = fn._mcp_group
         if group is ROOT:
-            mcp.tool()(fn)
+            mcp.tool(structured_output=False)(_compact(fn))
         else:
             if group.name not in groups:
                 groups[group.name] = (group, {})
@@ -225,7 +255,7 @@ def _register_tools():
             tool_fn.__doc__ = gdoc
             return tool_fn
 
-        mcp.tool()(_make_tool(group_name, doc))
+        mcp.tool(structured_output=False)(_compact(_make_tool(group_name, doc)))
 
 
 _register_tools()
