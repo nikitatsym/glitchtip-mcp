@@ -32,6 +32,10 @@ Exposes the full GlitchTip REST API (≈150 operations) as typed MCP tools, grou
 
 Get a token from your profile → Auth Tokens.
 
+### HTTP
+
+`glitchtip-mcp --http` serves streamable HTTP at `http://127.0.0.1:8000/mcp` (`--host`, `--port`) instead of stdio, same environment variables. No authentication: put a gateway in front.
+
 ## Usage
 
 Each group is a meta-tool. Call with `operation="help"` to list operations, or pass `operation` + `params`:
