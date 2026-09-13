@@ -739,14 +739,15 @@ def test_client_var_overrides_the_module_singleton(monkeypatch):
 
 
 class _VersionClient:
-    def __init__(self, response):
-        self._response = response
+    """Client stub with check() only: the version tool must not request anything itself."""
 
-    def get(self, path: str):
-        assert path == "/api/settings/"
-        if isinstance(self._response, Exception):
-            raise self._response
-        return self._response
+    def __init__(self, service):
+        self._service = service
+
+    def check(self) -> dict:
+        if isinstance(self._service, Exception):
+            raise self._service
+        return self._service
 
 
 class _WhoAmIClient:
@@ -758,20 +759,58 @@ class _WhoAmIClient:
         return self._response
 
 
-def test_version_returns_only_safe_service_fields(monkeypatch):
+def test_check_returns_only_safe_service_fields(monkeypatch):
+    from glitchtip_mcp.client import GlitchTipClient
+
+    client = GlitchTipClient.__new__(GlitchTipClient)
+    client._base = "https://example.invalid"
+    client._token = "token"
+    calls = []
+
+    def record(method, path, params=None, json=None):
+        calls.append((method, path))
+        if path == "/api/settings/":
+            return {
+                "version": "6.1.6",
+                "user": {"email": "user@example.com"},
+                "auth": {"token": "must-not-leak"},
+            }
+        return {"id": "1", "email": "user@example.com"}
+
+    monkeypatch.setattr(client, "_call", record)
+
+    result = client.check()
+
+    # /api/settings/ answers anonymously, so the user read is what proves the token.
+    assert calls == [("GET", "/api/0/users/me/"), ("GET", "/api/settings/")]
+    assert result == {"status": "ok", "version": "6.1.6"}
+    assert "must-not-leak" not in repr(result)
+
+
+def test_check_requires_url_and_token():
+    from glitchtip_mcp.client import GlitchTipClient
+
+    client = GlitchTipClient.__new__(GlitchTipClient)
+    client._base = ""
+    client._token = ""
+
+    with pytest.raises(ValueError, match="GLITCHTIP_URL and GLITCHTIP_TOKEN must be set"):
+        client.check()
+
+
+def test_version_reports_service_from_check(monkeypatch):
     from glitchtip_mcp import tools
 
-    response = {
-        "version": "6.1.6",
-        "user": {"email": "user@example.com"},
-        "auth": {"token": "must-not-leak"},
-    }
-    monkeypatch.setattr(tools, "_get_client", lambda: _VersionClient(response))
+    monkeypatch.setattr(
+        tools,
+        "_get_client",
+        lambda: _VersionClient({"status": "ok", "version": "6.1.6"}),
+    )
 
     result = tools.glitchtip_version()
 
     assert result["service"] == {"status": "ok", "version": "6.1.6"}
-    assert "must-not-leak" not in repr(result)
+    assert isinstance(result["mcp"], str)
 
 
 def test_version_does_not_expose_error_details(monkeypatch):

@@ -32,10 +32,22 @@ class GlitchTipClient:
     ):
         s = settings or get_settings()
         self._base = (base_url or s.glitchtip_url).rstrip("/")
+        self._token = token or s.glitchtip_token
         self._http = httpx.Client(
-            headers={"Authorization": f"Bearer {token or s.glitchtip_token}"},
+            headers={"Authorization": f"Bearer {self._token}"},
             timeout=30.0,
         )
+
+    def check(self) -> dict:
+        """Verify URL and token with one authenticated read, and report service status.
+
+        ``/api/settings/`` carries the version but is served anonymously, so only a
+        user read proves the token.
+        """
+        if not self._base or not self._token:
+            raise ValueError("GLITCHTIP_URL and GLITCHTIP_TOKEN must be set")
+        self.get("/api/0/users/me/")
+        return {"status": "ok", "version": self.get("/api/settings/")["version"]}
 
     def _call(
         self,

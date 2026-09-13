@@ -321,11 +321,7 @@ _op(glitchtip_read)(who_am_i)
 def glitchtip_version():
     """Get the MCP server version and GlitchTip service status."""
     try:
-        response = _get_client().get("/api/settings/")
-        service = {
-            "status": "ok",
-            "version": response["version"],
-        }
+        service = _get_client().check()
     except Exception:  # noqa: BLE001 - version check must not crash the whole tool
         service = {"status": "error"}
     return {
