@@ -725,6 +725,19 @@ def test_client_delete_forwards_json_without_losing_query_params(monkeypatch):
     assert calls == [("DELETE", "/api/0/users/42/emails/", params, payload)]
 
 
+def test_client_var_overrides_the_module_singleton(monkeypatch):
+    from glitchtip_mcp import _helpers
+
+    bound, singleton = object(), object()
+    monkeypatch.setattr(_helpers, "_client", singleton)
+    token = _helpers.client_var.set(bound)
+    try:
+        assert _helpers._get_client() is bound
+    finally:
+        _helpers.client_var.reset(token)
+    assert _helpers._get_client() is singleton
+
+
 class _VersionClient:
     def __init__(self, response):
         self._response = response

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import httpx
 
-from .config import get_settings
+from .config import Settings, get_settings
 
 
 class GlitchTipError(Exception):
@@ -23,8 +23,14 @@ class GlitchTipClient:
     Returns parsed JSON or None for empty/204 responses.
     """
 
-    def __init__(self, base_url: str | None = None, token: str | None = None):
-        s = get_settings()
+    def __init__(
+        self,
+        base_url: str | None = None,
+        token: str | None = None,
+        *,
+        settings: Settings | None = None,
+    ):
+        s = settings or get_settings()
         self._base = (base_url or s.glitchtip_url).rstrip("/")
         self._http = httpx.Client(
             headers={"Authorization": f"Bearer {token or s.glitchtip_token}"},

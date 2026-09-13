@@ -2,10 +2,15 @@ import argparse
 
 from mcp.server.transport_security import TransportSecuritySettings
 
+from ._helpers import client_var
+from .client import GlitchTipClient
+from .config import Settings
+from .server import mcp
+
+__all__ = ["GlitchTipClient", "Settings", "client_var", "main", "mcp"]
+
 
 def main() -> None:
-    from .server import mcp
-
     parser = argparse.ArgumentParser(
         prog="glitchtip-mcp",
         description="MCP server for GlitchTip. Serves MCP over stdio unless --http is given.",
