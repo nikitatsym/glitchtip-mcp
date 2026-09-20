@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "glitchtip-mcp"
 version = "1.0.0"
-description = "MCP server for GlitchTip — full API coverage for autonomous agents"
+description = "MCP server for GlitchTip, built for autonomous agents"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"

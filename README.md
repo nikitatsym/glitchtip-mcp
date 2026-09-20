@@ -2,7 +2,7 @@
 
 MCP server for [GlitchTip](https://glitchtip.com) — open-source Sentry-compatible error tracking.
 
-Exposes the full GlitchTip REST API (≈150 operations) as typed MCP tools, grouped by risk:
+Exposes the GlitchTip REST API as typed MCP tools, grouped by risk:
 
 | Group | Operations |
 |---|---|
